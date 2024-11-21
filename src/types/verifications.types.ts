@@ -28,7 +28,7 @@ export type EducationVerificationsType = {
   class10: {
     isSelfAttested?: boolean;
     proof?: [];
-    mailStatus?: string;
+    mailStatus?:string;
   };
   class12: {
     isSelfAttested?: boolean;

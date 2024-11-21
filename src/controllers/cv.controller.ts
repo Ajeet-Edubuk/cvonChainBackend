@@ -54,6 +54,7 @@ type AchievementsObjectType = {
 
 // Main data type with personal details and education
 type DataToBeStoredType = {
+  nanoId: string;
   personalDetails: PersonalDetailsType;
   education: EducationType;
   experience: ExperienceObjectType[] | [];
@@ -74,6 +75,7 @@ type DataToBeStoredType = {
 
 // requestbody type;
 interface RequestBodyType {
+  nanoId: string;
   name: string;
   email: string;
   location: string;
@@ -109,9 +111,11 @@ interface RequestBodyType {
   projectsVerifications: ProjectVerificationType;
   profileSummaryVerification: ProfileSummaryVerificationType;
 }
+
 export const createCv = async (req: Request, res: Response) => {
   try {
     const {
+      nanoId,
       name,
       email,
       location,
@@ -166,6 +170,7 @@ export const createCv = async (req: Request, res: Response) => {
     }
 
     let dataToBeStored: DataToBeStoredType = {
+      nanoId,
       personalDetails: {
         name,
         email,
@@ -287,9 +292,58 @@ export const getCv = async (req: Request, res: Response) => {
   }
 };
 
-export const verifyDoc = async (req:Request, res:Response) => {
+const statusType = {
+  pending: "pending",
+  approved: "approved",
+  rejected: "rejected",
+};
+
+export const verifyDoc = async (req: Request, res: Response) => {
   try {
-    const { pinataHash } = req.params;
+    const { pinataHash, field, subfield, nanoId } = req.params;
+    
+    const approveDoc = async () => {
+      const fieldPath = `${field}.${subfield}.mailStatus`;
+      const updatedCv = await CV.findOneAndUpdate(
+        { nanoId },
+        { $set: { [fieldPath]: statusType.approved } },
+        { new: true }
+      );
+
+      if (!updatedCv) {
+        return res.status(404).json({ message: "CV not found!" });
+      }
+
+      console.log("Mail status updated");
+      return updatedCv;
+    };
+    const rejectDoc = async () => {
+      const fieldPath = `${field}.${subfield}.mailStatus`;
+      const updatedCv = await CV.findOneAndUpdate(
+        { nanoId },
+        { $set: { [fieldPath]: statusType.rejected } },
+        { new: true }
+      );
+
+      if (!updatedCv) {
+        return res.status(404).json({ message: "CV not found!" });
+      }
+
+      console.log("Mail status updated");
+      return updatedCv;
+    };
+
+    // Check if this is an approval request
+    if (req.method === "PUT" && req.body.action === "approve") {
+      await approveDoc();
+      return res.json({ message: "Mail status updated successfully!" });
+    }
+    if (req.method === "PUT" && req.body.action === "reject") {
+      await rejectDoc();
+      return res.json({ message: "Mail status updated successfully!" });
+    }
+
+    // Existing logic to display HTML content...
     const response = await axios.get(
       `https://${process.env.pinataGateway}/ipfs/${pinataHash}`,
       { responseType: "arraybuffer" }
@@ -297,108 +351,7 @@ export const verifyDoc = async (req:Request, res:Response) => {
 
     const contentType = response.headers["content-type"];
 
-    if (contentType.includes("text/html")) {
-      const html = response.data;
-      const $ = cheerio.load(html);
-      let pdfLinkText = null;
-
-      // Search for PDF links in the HTML
-      $("a").each((index, element) => {
-        const link = $(element).attr("href");
-        if (link && link.endsWith(".pdf")) {
-          pdfLinkText = $(element).text();
-          return false; // Stop after finding the first match
-        }
-      });
-
-      console.log(pdfLinkText);
-
-      // If a PDF link is found, fetch the PDF data
-      if (pdfLinkText) {
-        const pdfData = await axios.get(
-          `https://${process.env.pinataGateway}/ipfs/${pinataHash}/${pdfLinkText}`,
-          { responseType: "arraybuffer" }
-        );
-        const base64Pdf = Buffer.from(pdfData.data, "binary").toString(
-          "base64"
-        );
-
-        // Serve HTML with embedded PDF
-        const htmlContent = `
-            <!DOCTYPE html>
-            <html lang="en">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Edubuk</title>
-                    <style>
-
-                        .container
-                            {
-                                display: flex;
-                                flex-direction:column;
-                                justify-content: center;
-                                align-items: center;
-                                text-align: center;
-                                row-gap: 10px;
-                                width: 100dvw;
-                                height: 100dvh;
-                            }
-                        h1 {
-                                text-align: center;
-                                align-items: center;
-                                color: #006666;
-                            }
-
-                        .btn
-                            {
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
-                                text-align: center;
-                                gap: 10px;
-                            }
-                        button
-                            {
-                                padding: 20px 30px;
-                                border: none;
-                                border-radius: 8px;
-                                font-size: 20px;
-                                cursor:pointer;
-                            }
-                            iframe{
-                        width:100%;
-                        height:100%;
-                        border:none;
-                        }
-
-
-                        #approve
-                            {
-                                color:green
-                            }
-                        #reject
-                            {
-                                color:red
-                            }
-                    </style>
-                </head>
-                <body>
-                    <div class='container'>
-                    <h1>Verify Certificate</h1>
-                    <div class='btn'>
-                            <button id='approve'>Approve</button>
-                            <button id='reject'>Reject</button>
-                        </div>                      
-                        <iframe src="data:application/pdf;base64,${base64Pdf}" width="100%" style="border:none;"></iframe>
-                    </div>
-                </body>
-            </html>
-                `;
-        res.setHeader("Content-Type", "text/html");
-        res.send(htmlContent);
-      }
-    } else if (contentType.includes("application/pdf")) {
+    if (contentType.includes("application/pdf")) {
       // If it's directly a PDF, embed it in HTML
       const base64Pdf = Buffer.from(response.data, "binary").toString("base64");
 
@@ -409,6 +362,7 @@ export const verifyDoc = async (req:Request, res:Response) => {
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>Edubuk</title>
+                    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
                     <style>
 
                         .container
@@ -481,6 +435,70 @@ export const verifyDoc = async (req:Request, res:Response) => {
                         <iframe src="data:application/pdf;base64,${base64Pdf}" ></iframe>
                     </div>
                 </body>
+                <script>
+            document.getElementById('approve').addEventListener('click', async () => {
+                try {
+                    const response = await fetch(window.location.href, {
+                        method: 'PUT', 
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ action: 'approve' }),
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                      Swal.fire({
+                      title: "Thank You!",
+                      text: "Document approved",
+                      icon: "success",
+                      confirmButtonText: "OK",
+                  });
+                  } else {
+                      const result = await response.json();
+                      Swal.fire({
+                          title: "Error",
+                          text: result.message || "Something went wrong",
+                          icon: "error",
+                          confirmButtonText: "Retry",
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to approve the document. Please retry...');
+                }
+            });
+            document.getElementById('reject').addEventListener('click', async () => {
+                try {
+                    const response = await fetch(window.location.href, {
+                        method: 'PUT', 
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ action: 'reject' }),
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                      Swal.fire({
+                      title: "Thank You!",
+                      text: "Document successfully rejected",
+                      icon: "success",
+                      confirmButtonText: "OK",
+                  });
+                  } else {
+                      const result = await response.json();
+                      Swal.fire({
+                          title: "Error",
+                          text: result.message || "Something went wrong",
+                          icon: "error",
+                          confirmButtonText: "Retry",
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to reject the document. Please retry...');
+                }
+            });
+        </script>
             </html>
                 `;
       res.setHeader("Content-Type", "text/html");
@@ -503,6 +521,7 @@ export const verifyDoc = async (req:Request, res:Response) => {
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>Edubuk</title>
+                    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
                     <style>
 
                         .container
@@ -542,8 +561,11 @@ export const verifyDoc = async (req:Request, res:Response) => {
                             }
                         button:hover
                         {
-                        background-color:white;
                         border:1px solid #006666;
+                        }
+                        button:active
+                        {
+                        transform:translateY(2px);
                         }
 
                         img {
@@ -576,6 +598,70 @@ export const verifyDoc = async (req:Request, res:Response) => {
                         <img src="${imgSrc}" alt="Embedded Image" style="max-width: 100%; height: auto;" />                        
                     </div>
                 </body>
+                <script>
+            document.getElementById('approve').addEventListener('click', async () => {
+                try {
+                    const response = await fetch(window.location.href, {
+                        method: 'PUT', 
+                        body: JSON.stringify({ action: 'approve' }),
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                      Swal.fire({
+                      title: "Thank You!",
+                      text: "Document approved",
+                      icon: "success",
+                      confirmButtonText: "OK",
+                  });
+                  } else {
+                      const result = await response.json();
+                      Swal.fire({
+                          title: "Error",
+                          text: result.message || "Something went wrong",
+                          icon: "error",
+                          confirmButtonText: "Retry",
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to approve the document. Please retry...');
+                }
+            });
+            document.getElementById('reject').addEventListener('click', async () => {
+                try {
+                    const response = await fetch(window.location.href, {
+                        method: 'PUT', 
+                        body: JSON.stringify({ action: 'reject' }),
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                      Swal.fire({
+                      title: "Thank You !",
+                      text: "Document successfully rejected",
+                      icon: "success",
+                      confirmButtonText: "OK",
+                  });
+                  } else {
+                      const result = await response.json();
+                      Swal.fire({
+                          title: "Error",
+                          text: result.message || "Something went wrong",
+                          icon: "error",
+                          confirmButtonText: "Retry",
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to reject the document. Please retry...');
+                }
+            });
+        </script>
             </html>
                 `;
       res.setHeader("Content-Type", "text/html");
