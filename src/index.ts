@@ -10,11 +10,7 @@ const app = express();
 config();
 
 app.use(
-  cors({
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    origin: process.env.FRONT_END_URL,
-    credentials: true,
-  })
+  cors()
 );
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
