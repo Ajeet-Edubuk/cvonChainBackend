@@ -9,9 +9,13 @@ const app = express();
 
 config();
 
-app.use(
-  cors()
-);
+const corsOptions = {
+  origin:process.env.FRONT_END_URL, // Allow only your frontend origin
+  methods: ["GET", "POST", "PUT", "DELETE"],       // Specify allowed methods
+  credentials: true,                               // Allow cookies if needed
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
