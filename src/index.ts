@@ -10,7 +10,7 @@ const app = express();
 config();
 
 const corsOptions = {
-  origin:process.env.FRONT_END_URL, // Allow only your frontend origin
+  origin:"https://edubuk-cv-on-chain.vercel.app", // Allow only your frontend origin
   methods: ["GET", "POST", "PUT", "DELETE"],       // Specify allowed methods
   credentials: true,                               // Allow cookies if needed
 };
