@@ -9,13 +9,13 @@ const app = express();
 
 config();
 
-const corsOptions = {
-  origin:"https://edubuk-cv-on-chain.vercel.app", // Allow only your frontend origin
-  methods: ["GET", "POST", "PUT", "DELETE"],       // Specify allowed methods
-  credentials: true,                               // Allow cookies if needed
-};
+// const corsOptions = {
+//   origin:"https://edubuk-cv-on-chain.vercel.app", // Allow only your frontend origin
+//   methods: ["GET", "POST", "PUT", "DELETE"],       // Specify allowed methods
+//   credentials: true,                               // Allow cookies if needed
+// };
 
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
