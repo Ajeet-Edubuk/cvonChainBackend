@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import axios from "axios";
+import User,{ IUser } from "../models/userCV.model";
 import * as cheerio from "cheerio";
 
 import {
@@ -75,6 +76,7 @@ type DataToBeStoredType = {
 
 // requestbody type;
 interface RequestBodyType {
+  loginMailId:string,
   nanoId: string;
   name: string;
   email: string;
@@ -115,6 +117,7 @@ interface RequestBodyType {
 export const createCv = async (req: Request, res: Response) => {
   try {
     const {
+      loginMailId,
       nanoId,
       name,
       email,
@@ -153,6 +156,7 @@ export const createCv = async (req: Request, res: Response) => {
     } = req.body as RequestBodyType;
 
     if (
+      !loginMailId ||
       !name ||
       !email ||
       !location ||
@@ -269,6 +273,12 @@ export const createCv = async (req: Request, res: Response) => {
     }
 
     const cvData = await CV.create(dataToBeStored);
+    if(cvData)
+    await User.findOneAndUpdate(
+      { email:loginMailId },
+      { $push: { documentIds: cvData._id } },
+      { new: true, upsert: true }
+    );
 
     return res.json(cvData);
   } catch (error) {
@@ -276,6 +286,30 @@ export const createCv = async (req: Request, res: Response) => {
     res.status(500).json("ERROR:IN CREATE-CV CONTROLLER");
   }
 };
+
+export const getAllCvIds= async(req:Request,res:Response)=>{
+  try {
+    const {email} = req.params;
+    // Find the user by email
+    const user: IUser | null = await User.findOne({ email }).select("documentIds");
+
+    if (!user) {
+      console.log("User not found");
+      return res.status(500).json({
+        success:false,
+        message:"No Cv Found"})
+
+    }
+
+    // Return the array of document IDs
+    const Ids= user.documentIds.map((id) => id.toString());
+    return res.status(200).json({success:true,Ids});
+    
+  } catch (error) {
+    console.log("ERROR:IN getAllCVIds", error);
+    res.status(500).json("ERROR:IN getAllCVIds CONTROLLER");
+  }
+}
 
 export const getCv = async (req: Request, res: Response) => {
   try {
