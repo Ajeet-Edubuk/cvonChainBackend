@@ -12,7 +12,7 @@ config();
 app.use(
   cors({
     methods: ["GET", "POST", "PUT", "DELETE"],
-    origin: "edubuk-cv-on-chain.vercel.app",
+    origin: "https://edubuk-cv-on-chain.vercel.app",
     credentials: true,
   })
 );
