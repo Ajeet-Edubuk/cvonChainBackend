@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import axios from "axios";
 import User,{ IUser } from "../models/userCV.model";
-import * as cheerio from "cheerio";
+//import * as cheerio from "cheerio";
 
 import {
   AwardObjectType,
@@ -31,9 +31,12 @@ type EducationType = {
   underGraduateCollege?: string;
   underGraduateDegree?: string;
   underGraduateGPA?: string;
+  underGraduateDuration?:string;
   postGraduateCollege?: string;
   postGraduateDegree?: string;
   postGraduateGPA?: string;
+  postGraduateDuration?:string;
+
 };
 
 // Define the type for personal details object
@@ -44,6 +47,11 @@ type PersonalDetailsType = {
   profession: string;
   imageUrl: string;
   phoneNumber: string;
+  linkedinProfile:string;
+  twitterProfile:string;
+  telegramProfile:string;
+  instagramProfile:string;
+  githubProfile:string;
   years_of_experience: string;
 };
 
@@ -84,6 +92,11 @@ interface RequestBodyType {
   profession: string;
   imageUrl: string;
   phoneNumber: string;
+  linkedinProfile:string;
+  twitterProfile:string;
+  telegramProfile:string;
+  instagramProfile:string;
+  githubProfile:string;
   Years_of_experience: string;
   profile_summary: string;
   class10SchoolName: string;
@@ -95,9 +108,11 @@ interface RequestBodyType {
   underGraduateCollegeName?: string;
   underGraduateDegreeName?: string;
   underGraduateGPA?: string;
+  underGraduateDuration?:string;
   postGraduateCollegeName?: string;
   postGraduateDegreeName?: string;
   postGraduateGPA?: string;
+  postGraduateDuration?:string;
   Experience: ExperienceObjectType[] | []; // Experience is an array of objects
   Skills: string[];
   Awards: AwardObjectType[] | [];
@@ -115,6 +130,7 @@ interface RequestBodyType {
 }
 
 export const createCv = async (req: Request, res: Response) => {
+  console.log("req",req.body)
   try {
     const {
       loginMailId,
@@ -125,6 +141,11 @@ export const createCv = async (req: Request, res: Response) => {
       profession,
       imageUrl,
       phoneNumber,
+      linkedinProfile,
+      twitterProfile,
+      telegramProfile,
+      instagramProfile,
+      githubProfile,
       Years_of_experience,
       profile_summary,
       class10SchoolName,
@@ -136,9 +157,11 @@ export const createCv = async (req: Request, res: Response) => {
       underGraduateCollegeName,
       underGraduateDegreeName,
       underGraduateGPA,
+      underGraduateDuration,
       postGraduateCollegeName,
       postGraduateDegreeName,
       postGraduateGPA,
+      postGraduateDuration,
       Experience,
       Skills,
       Awards,
@@ -155,6 +178,7 @@ export const createCv = async (req: Request, res: Response) => {
       profileSummaryVerification,
     } = req.body as RequestBodyType;
 
+    console.log("under",underGraduateDuration)
     if (
       !loginMailId ||
       !name ||
@@ -182,6 +206,11 @@ export const createCv = async (req: Request, res: Response) => {
         profession,
         imageUrl,
         phoneNumber,
+        linkedinProfile,
+        twitterProfile,
+        telegramProfile,
+        instagramProfile,
+        githubProfile,
         years_of_experience: Years_of_experience,
       },
       education: {},
@@ -238,11 +267,15 @@ export const createCv = async (req: Request, res: Response) => {
     addEducationFields("underGraduateCollege", underGraduateCollegeName);
     addEducationFields("underGraduateDegree", underGraduateDegreeName);
     addEducationFields("underGraduateGPA", underGraduateGPA);
+    addEducationFields("underGraduateDuration", underGraduateDuration);
 
     // postGraduate fields;
     addEducationFields("postGraduateCollege", postGraduateCollegeName);
     addEducationFields("postGraduateDegree", postGraduateDegreeName);
     addEducationFields("postGraduateGPA", postGraduateGPA);
+    addEducationFields("postGraduateDuration", postGraduateDuration);
+
+    
 
     if (Experience.length > 0) {
       dataToBeStored.experience = Experience;
@@ -335,9 +368,9 @@ const statusType = {
 export const verifyDoc = async (req: Request, res: Response) => {
   try {
     const { pinataHash, field, subfield, nanoId } = req.params;
-    
+    const actualSubField = subfield.replace(/-/g, ' ');
     const approveDoc = async () => {
-      const fieldPath = `${field}.${subfield}.mailStatus`;
+      const fieldPath = `${field}.${actualSubField}.mailStatus`;
       const updatedCv = await CV.findOneAndUpdate(
         { nanoId },
         { $set: { [fieldPath]: statusType.approved } },
@@ -352,7 +385,7 @@ export const verifyDoc = async (req: Request, res: Response) => {
       return updatedCv;
     };
     const rejectDoc = async () => {
-      const fieldPath = `${field}.${subfield}.mailStatus`;
+      const fieldPath = `${field}.${actualSubField}.mailStatus`;
       const updatedCv = await CV.findOneAndUpdate(
         { nanoId },
         { $set: { [fieldPath]: statusType.rejected } },
@@ -486,6 +519,11 @@ export const verifyDoc = async (req: Request, res: Response) => {
                       text: "Document approved",
                       icon: "success",
                       confirmButtonText: "OK",
+                  }).then((result)=>{
+                  if(result.isConfirmed)
+                  {
+                  window.location.href = "https://www.edubukeseal.com/";
+                  }
                   });
                   } else {
                       const result = await response.json();
@@ -517,6 +555,11 @@ export const verifyDoc = async (req: Request, res: Response) => {
                       text: "Document successfully rejected",
                       icon: "success",
                       confirmButtonText: "OK",
+                  }).then((result)=>{
+                  if(result.isConfirmed)
+                  {
+                  window.location.href = "https://www.edubukeseal.com/";
+                  }
                   });
                   } else {
                       const result = await response.json();
@@ -649,6 +692,11 @@ export const verifyDoc = async (req: Request, res: Response) => {
                       text: "Document approved",
                       icon: "success",
                       confirmButtonText: "OK",
+                  }).then((result)=>{
+                  if(result.isConfirmed)
+                  {
+                  window.location.href = "https://www.edubukeseal.com/";
+                  }
                   });
                   } else {
                       const result = await response.json();
@@ -680,6 +728,11 @@ export const verifyDoc = async (req: Request, res: Response) => {
                       text: "Document successfully rejected",
                       icon: "success",
                       confirmButtonText: "OK",
+                  }).then((result)=>{
+                  if(result.isConfirmed)
+                  {
+                  window.location.href = "https://www.edubukeseal.com/";
+                  }
                   });
                   } else {
                       const result = await response.json();

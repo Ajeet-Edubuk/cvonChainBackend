@@ -17,6 +17,10 @@ type personalDetailsObjectType = {
   phoneNumber: string;
   profession: string;
   imageUrl: string;
+  linkedinProfile:string;
+  twitterProfile:string;
+  telegramProfile:string;
+  instagramProfile:string;
   years_of_experience: string;
 };
 type EducationObjectType = {
@@ -108,6 +112,10 @@ const CvSchema: Schema<cvSchemaDataType> = new Schema(
       profession: { type: String, required: true },
       imageUrl: { type: String, required: true },
       phoneNumber: { type: String, required: true },
+      linkedinProfile:{type:String, required:true},
+      twitterProfile:{type:String, required:true},
+      telegramProfile:{type:String, required:true},
+      instagramProfile:{type:String, required:true},
       years_of_experience: { type: String, required: true },
     },
     education: {
@@ -120,9 +128,21 @@ const CvSchema: Schema<cvSchemaDataType> = new Schema(
       underGraduateCollege: { type: String },
       underGraduateDegree: { type: String },
       underGraduateGPA: { type: Number },
+      underGraduateDuration:{
+        duration: {
+          from: { type: String, required: true },
+          to: { type: String, required: true },
+        },
+      },
       postGraduateCollege: { type: String },
       postGraduateDegree: { type: String },
       postGraduateGPA: { type: Number },
+      postGraduateDuration:{
+        duration: {
+          from: { type: String, required: true },
+          to: { type: String, required: true },
+        },
+      },
     },
     experience: [
       {
@@ -130,7 +150,7 @@ const CvSchema: Schema<cvSchemaDataType> = new Schema(
         description: { type: String, required: true },
         duration: {
           from: { type: String, required: true },
-          to: { type: String, required: true },
+          to: { type: String },
         },
         job_role: { type: String, required: true },
       },
