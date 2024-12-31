@@ -12,7 +12,7 @@ config();
 app.use(
   cors({
     methods: ["GET", "POST", "PUT", "DELETE"],
-    origin: "http://localhost:5174",
+    origin: "https://www.edubukcvonchain.com",
     credentials: true,
   })
 );
