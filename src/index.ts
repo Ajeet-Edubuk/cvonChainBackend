@@ -12,7 +12,8 @@ config();
 app.use(
   cors({
     methods: ["GET", "POST", "PUT", "DELETE"],
-    origin: "https://edubukcvonchain.com",
+    origin: ['https://www.edubukcvonchain.com',
+  'https://edubukcvonchain.com',],
     credentials: true,
   })
 );
