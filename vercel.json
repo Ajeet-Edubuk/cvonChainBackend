@@ -9,7 +9,7 @@
             "dest":"src/index.ts",
             "methods": ["GET", "POST", "PUT", "DELETE"],
             "headers":{
-                "Access-Control-Allow-Origin":"https://edubukcvonchain.com"
+                "Access-Control-Allow-Origin":"*"
             }
         }
     ]
