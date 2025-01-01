@@ -10,12 +10,7 @@ const app = express();
 config();
 
 app.use(
-  cors({
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    origin: [
-  'https://edubukcvonchain.com'],
-    credentials: true,
-  })
+  cors()
 );
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
