@@ -12,7 +12,7 @@ config();
 app.use(
   cors({
     methods: ["GET", "POST", "PUT", "DELETE"],
-    origin:'https://edubukcvonchain.com',
+    origin:'https://edubuk-cvonchain-okto.vercel.app',
     credentials: true,
   })
 );
