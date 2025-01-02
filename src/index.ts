@@ -9,11 +9,12 @@ const app = express();
 
 config();
 
+
 app.use(
   cors({
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    origin:'https://edubuk-cvonchain-okto.vercel.app',
-    credentials: true,
+    origin: '*', // Allow all origins
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Specify allowed HTTP methods
+    allowedHeaders: ['Content-Type', 'Authorization'], // Specify allowed headers
   })
 );
 app.use(express.json());
