@@ -11,11 +11,7 @@ config();
 
 
 app.use(
-  cors({
-    origin: '*', // Allow all origins
-    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Specify allowed HTTP methods
-    allowedHeaders: ['Content-Type', 'Authorization'], // Specify allowed headers
-  })
+  cors()
 );
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
